@@ -1,0 +1,47 @@
+<div class="container py-4">
+    <h1 class="text-center mb-4">📊 Statistiques sanitaires par pays</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <label for="pays-select" class="form-label">Sélectionner un pays</label>
+            <select id="pays-select" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label for="maladie-select" class="form-label">Sélectionner une maladie</label>
+            <select id="maladie-select" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label for="type-select" class="form-label">Type de statistique</label>
+            <select id="type-select" class="form-select">
+                <option value="nouveau_mort">Nouveaux morts</option>
+                <option value="nouveau_cas">Nouveaux cas</option>
+                <option value="total_mort">Total des morts</option>
+                <option value="total_cas">Total des cas</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow">
+        <div class="card-body">
+            <h5 class="card-title">Évolution des données</h5>
+            <canvas id="mortChart" height="300"></canvas>
+            <div class="mt-3 text-end">
+                <button id="export-btn" class="btn btn-primary">📥 Exporter en CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow">
+        <div class="card-body">
+            <h5 class="card-title">Comparaison : Total morts / cas</h5>
+            <canvas id="compareChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow">
+        <div class="card-body">
+            <h5 class="card-title">Top 5 pays avec le plus de morts (maladie sélectionnée)</h5>
+            <canvas id="topPaysChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
