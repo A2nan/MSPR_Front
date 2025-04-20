@@ -23,11 +23,6 @@ mspr-statistiques/
 
 Installation
 ------------
-Backend (Spring Boot)
-1. Aller dans le dossier backend
-2. Lancer le projet :
-   ./mvnw spring-boot:run
-   → API disponible sur http://localhost:8080/api
 
 Frontend (Angular)
 1. Aller dans le dossier frontend
