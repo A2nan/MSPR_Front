@@ -1,59 +1,63 @@
-# MSPRFront
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.6.
+MSPR - Statistiques Sanitaires
+==============================
 
-## Development server
+Application web développée dans le cadre d'un projet MSPR permettant de visualiser l’évolution des cas et des décès par maladie, pays et région à l’aide de graphiques dynamiques.
 
-To start a local development server, run:
+Fonctionnalités
+---------------
+- Visualisation des statistiques sanitaires (morts, cas) par pays, maladie et période
+- Comparaison morts vs cas cumulés avec affichage du taux de létalité (%)
+- Classement des 5 pays avec le plus de morts
+- Export CSV des données affichées
+- Interface utilisateur responsive avec Bootstrap 5
+- API backend développée en Java Spring Boot
+- Frontend moderne en Angular (standalone components)
 
-```bash
-ng serve
-```
+Architecture
+------------
+mspr-statistiques/
+├── backend/              → API REST Spring Boot (Java)
+├── frontend/             → Application Angular (v16+)
+└── README.txt            → Ce fichier
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Installation
+------------
+Backend (Spring Boot)
+1. Aller dans le dossier backend
+2. Lancer le projet :
+   ./mvnw spring-boot:run
+   → API disponible sur http://localhost:8080/api
 
-## Code scaffolding
+Frontend (Angular)
+1. Aller dans le dossier frontend
+2. Installer les dépendances :
+   npm install
+3. Lancer le serveur de développement :
+   ng serve
+   → Interface sur http://localhost:4200
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+API endpoints principaux
+------------------------
+- GET /api/pays → liste des pays
+- GET /api/maladies → liste des maladies
+- GET /api/statistiques/donnees-par-jour?paysId=X&maladieId=Y&type=total_mort
+- GET /api/statistiques/top-pays-morts?maladieId=Y
 
-```bash
-ng generate component component-name
-```
+Technologies utilisées
+----------------------
+Backend :
+- Java 17
+- Spring Boot (JPA, Web, CORS)
+- H2 ou MySQL/PostgreSQL
+- Swagger (OpenAPI)
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Frontend :
+- Angular 16+
+- Chart.js
+- Bootstrap 5
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Auteurs
+-------
+Adnan Mahboubi
+Moumine Koné
