@@ -14,8 +14,9 @@ export class StatistiquesComponent implements OnInit {
   selectedType: string = 'nouveau_mort';
 
   chart: any;
-  topChart: any;
   compareChart: any;
+  chartCas: any;
+  chartMorts: any;
 
   currentLabels: string[] = [];
   currentValues: number[] = [];
@@ -47,14 +48,19 @@ export class StatistiquesComponent implements OnInit {
 
     const select = document.getElementById('pays-select') as HTMLSelectElement;
     select.innerHTML = '';
-    paysList.forEach((p: any) => {
+
+    const filteredPays = paysList.filter((p: any) => p.nom_pays !== 'Inconnue');
+
+    filteredPays.forEach((p: any) => {
       const option = document.createElement('option');
       option.value = p.id_pays;
       option.textContent = p.nom_pays;
       select.appendChild(option);
     });
 
-    this.selectedPays = paysList[0].id_pays;
+    if (filteredPays.length > 0) {
+      this.selectedPays = filteredPays[0].id_pays;
+    }
 
     select.addEventListener('change', (e) => {
       this.selectedPays = (e.target as HTMLSelectElement).value;
@@ -68,23 +74,24 @@ export class StatistiquesComponent implements OnInit {
 
     const select = document.getElementById('maladie-select') as HTMLSelectElement;
     select.innerHTML = '';
-    maladieList.forEach((m: any) => {
+
+    const filteredMaladies = maladieList.filter((m: any) => m.nom_maladie !== 'Inconnue');
+
+    filteredMaladies.forEach((m: any) => {
       const option = document.createElement('option');
       option.value = m.id_maladie;
       option.textContent = m.nom_maladie;
       select.appendChild(option);
     });
 
-    this.selectedMaladie = maladieList[0].id_maladie;
+    if (filteredMaladies.length > 0) {
+      this.selectedMaladie = filteredMaladies[0].id_maladie;
+    }
 
     select.addEventListener('change', (e) => {
       this.selectedMaladie = (e.target as HTMLSelectElement).value;
       this.loadData();
     });
-
-    if (this.selectedMaladie) {
-      await this.loadTopPaysChart(this.selectedMaladie);
-    }
   }
 
   truncateTrailingZeros(data: any[]): any[] {
@@ -124,14 +131,15 @@ export class StatistiquesComponent implements OnInit {
       options: {
         responsive: true,
         scales: {
-          x: { title: { display: true, text: 'Date' } },
-          y: { title: { display: true, text: this.selectedType } }
+          x: { title: { display: true, text: 'Date' }},
+          y: { title: { display: true, text: this.selectedType }}
         }
       }
     });
 
     await this.loadComparisonChart();
-    await this.loadTopPaysChart(this.selectedMaladie);
+    await this.loadCasCharts();
+    await this.loadMortsCharts();
   }
 
   async loadComparisonChart() {
@@ -202,9 +210,9 @@ export class StatistiquesComponent implements OnInit {
           tooltip: {
             usePointStyle: true,
             callbacks: {
-              labelPointStyle: function(this: any, context: any) {
+              labelPointStyle: function (this: any, context: any) {
                 return {
-                  pointStyle: 'circle', // ✅ une valeur définie (et autorisée)
+                  pointStyle: 'circle',
                   rotation: 0
                 };
               }
@@ -231,37 +239,125 @@ export class StatistiquesComponent implements OnInit {
     });
   }
 
-  async loadTopPaysChart(maladieId: string) {
-    const res = await fetch(`${this.apiBase}/statistiques/top-pays-morts?maladieId=${maladieId}`);
-    const data = await res.json();
-
-    const labels = data.map((d: any) => d.pays);
-    const valeurs = data.map((d: any) => d.total);
-
-    if (this.topChart) this.topChart.destroy();
-
-    this.topChart = new Chart(document.getElementById('topPaysChart') as HTMLCanvasElement, {
-      type: 'bar',
+  async loadCasCharts() {
+    if (!this.selectedPays || !this.selectedMaladie) return;
+  
+    const resTotal = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=total_cas`);
+    const totalCasData = await resTotal.json();
+  
+    const resNouveau = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=nouveau_cas`);
+    const nouveauCasData = await resNouveau.json();
+  
+    const labels = totalCasData.map((d: any) => d.date);
+    const totalCas = totalCasData.map((d: any) => d.valeur);
+    const nouveauCas = nouveauCasData.map((d: any) => d.valeur);
+  
+    const { labels: cleanLabels, cleanedDatasets } = this.cleanMultipleDatasets(labels, [totalCas, nouveauCas]);
+    const [cleanTotalCas, cleanNouveauCas] = cleanedDatasets;
+  
+    if (this.chartCas) this.chartCas.destroy();
+  
+    this.chartCas = new Chart(document.getElementById('casChart') as HTMLCanvasElement, {
+      type: 'line',
       data: {
-        labels,
-        datasets: [{
-          label: 'Total des morts',
-          data: valeurs,
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          borderColor: 'rgb(255, 99, 132)',
-          borderWidth: 1
-        }]
+        labels: cleanLabels,
+        datasets: [
+          {
+            label: 'Total cas',
+            data: cleanTotalCas,
+            borderColor: 'blue',
+            backgroundColor: 'rgba(0,0,255,0.1)',
+            fill: true,
+            tension: 0.3
+          },
+          {
+            label: 'Nouveaux cas',
+            data: cleanNouveauCas,
+            borderColor: 'green',
+            backgroundColor: 'rgba(0,255,0,0.1)',
+            fill: true,
+            tension: 0.3
+          }
+        ]
       },
       options: {
         responsive: true,
-        indexAxis: 'y',
         scales: {
-          x: { title: { display: true, text: 'Nombre de morts' }},
-          y: { title: { display: true, text: 'Pays' }}
+          x: { title: { display: true, text: 'Date' }},
+          y: { title: { display: true, text: 'Nombre de cas' }}
         }
       }
     });
   }
+  
+
+  async loadMortsCharts() {
+    if (!this.selectedPays || !this.selectedMaladie) return;
+  
+    const resTotal = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=total_mort`);
+    const totalMortsData = await resTotal.json();
+  
+    const resNouveau = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=nouveau_mort`);
+    const nouveauMortsData = await resNouveau.json();
+  
+    const labels = totalMortsData.map((d: any) => d.date);
+    const totalMorts = totalMortsData.map((d: any) => d.valeur);
+    const nouveauMorts = nouveauMortsData.map((d: any) => d.valeur);
+  
+    const { labels: cleanLabels, cleanedDatasets } = this.cleanMultipleDatasets(labels, [totalMorts, nouveauMorts]);
+    const [cleanTotalMorts, cleanNouveauMorts] = cleanedDatasets;
+  
+    if (this.chartMorts) this.chartMorts.destroy();
+  
+    this.chartMorts = new Chart(document.getElementById('mortsChart') as HTMLCanvasElement, {
+      type: 'line',
+      data: {
+        labels: cleanLabels,
+        datasets: [
+          {
+            label: 'Total morts',
+            data: cleanTotalMorts,
+            borderColor: 'red',
+            backgroundColor: 'rgba(255,0,0,0.1)',
+            fill: true,
+            tension: 0.3
+          },
+          {
+            label: 'Nouveaux morts',
+            data: cleanNouveauMorts,
+            borderColor: 'black',
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            fill: true,
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { title: { display: true, text: 'Date' }},
+          y: { title: { display: true, text: 'Nombre de morts' }}
+        }
+      }
+    });
+  }
+  
+  cleanMultipleDatasets(labels: string[], datasets: number[][]): { labels: string[], cleanedDatasets: number[][] } {
+    const cleanedLabels: string[] = [];
+    const cleanedData: number[][] = datasets.map(() => []);
+  
+    for (let i = 0; i < labels.length; i++) {
+      const hasNonZero = datasets.some(ds => ds[i] !== 0);
+      if (hasNonZero) {
+        cleanedLabels.push(labels[i]);
+        datasets.forEach((ds, idx) => {
+          cleanedData[idx].push(ds[i]);
+        });
+      }
+    }
+    return { labels: cleanedLabels, cleanedDatasets: cleanedData };
+  }
+  
 
   exportToCSV(labels: string[], values: number[]) {
     let csv = 'Date,Valeur\n';
