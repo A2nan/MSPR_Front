@@ -1,0 +1,27 @@
+<footer class="site-footer">
+    <div class="footer-container">
+        <div class="footer-branding">
+            <div class="logo-link">
+                <img [src]="LogoUrl" alt="Logo">
+            </div>
+            <div class="footer-contact">
+                <h3>Adresse & contact :</h3>
+                <ul>
+                    <li>Adresse : France</li>
+                    <li>Téléphone : (+33) 2 67 89 00 00</li>
+                    <li>Email : {{email}}</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-navigation">
+            <nav>
+                <ul class="nav-links">
+                    <li><a routerLink="/accueil" routerLinkActive="active">Accueil</a></li>
+                    <li><a routerLink="/tableau-de-bord" routerLinkActive="active">Tableau de bord</a></li>
+                    <li><a routerLink="/a-propos" routerLinkActive="active">À propos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</footer>

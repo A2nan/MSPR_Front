@@ -1,0 +1,34 @@
+<section class="hero-section">
+    <div class="hero-content">
+        <h1>Analysez et visualisez les pandémies en un clic</h1>
+        <div class="hero-image">
+            <img [src]="ImgPandemie" alt="Visualisation de données">
+        </div>
+        <a routerLink="/tableau-de-bord" routerLinkActive="active">
+            <button class="cta-button" routerLink="/explorer">Explorer les données</button>
+        </a>
+    </div>
+</section>
+
+<section class="welcome-section">
+    <div class="welcome-container">
+        <h1>Bienvenue<br><span class="light-text">sur notre plateforme d'analyse des pandémies.</span></h1>
+        
+        <div class="welcome-content">
+            <p class="welcome-text">
+                Cet outil interactif vous permet d'explorer les données épidémiologiques de différentes crises sanitaires passées, de comprendre leurs dynamiques et d'identifier des tendances grâce à des visualisations claires et précises.
+            </p>
+            
+            <p class="welcome-text">
+                En utilisant des bases de données de sources officielles et en appliquant des techniques avancées d'analyse de données, notre objectif est de fournir aux chercheurs et aux décideurs des indicateurs clés pour mieux anticiper et prévenir les pandémies futures.
+            </p>
+        </div>
+        
+        <div class="separator"></div>
+        
+        <button class="dashboard-button" routerLink="/tableau-de-bord">
+            Voir le Tableau de Bord
+        </button>
+    </div>
+</section>
+

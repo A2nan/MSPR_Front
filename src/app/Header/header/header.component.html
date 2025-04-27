@@ -1,0 +1,17 @@
+<header>
+    <div class="header-left">
+        <!-- Logo avec routerLink vers la page d'accueil -->
+        <a routerLink="/accueil" class="logo-link">
+            <img [src]="logoUrl" alt="Logo" class="logo">
+        </a>
+
+        <!-- Navigation avec routerLink -->
+        <nav>
+            <ul>
+                <li><a routerLink="/accueil" routerLinkActive="active">Accueil</a></li>
+                <li><a routerLink="/tableau-de-bord" routerLinkActive="active">Tableau de bord</a></li>
+                <li><a routerLink="/a-propos" routerLinkActive="active">À propos</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>

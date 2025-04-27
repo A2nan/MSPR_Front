@@ -1,0 +1,46 @@
+.about-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+  
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+    }
+  
+    h2 {
+      color: #2980b9;
+      margin-top: 30px;
+    }
+  
+    ul {
+      padding-left: 20px;
+  
+      li {
+        margin-bottom: 8px;
+      }
+    }
+  
+    .team-list {
+      list-style-type: none;
+      padding-left: 0;
+  
+      li {
+        padding: 8px 0;
+        border-bottom: 1px dashed #eee;
+      }
+    }
+  
+    .mission-note {
+      margin-top: 40px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #3498db;
+      font-style: italic;
+    }
+  }
