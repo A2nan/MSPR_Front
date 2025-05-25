@@ -44,11 +44,42 @@
             <canvas id="casChart" height="300"></canvas>
         </div>
     </div>
-      
+
     <div class="my-4">
         <div class="card-body">
             <h5 class="card-title">Comparaison Total morts vs Nouveaux morts</h5>
             <canvas id="mortsChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Section pour l'import CSV et graphique prédictif -->
+    <div class="card mb-4 shadow">
+        <div class="card-body">
+            <h5 class="card-title">Données prédictives</h5>
+            <div class="mb-3">
+                <label for="csvFile" class="form-label">Importer des données prédictives (CSV)</label>
+                <input type="file" class="form-control" id="csvFile" accept=".csv" (change)="onFileSelected($event)">
+                <small class="text-muted d-block">Format attendu (CSV avec en-têtes) :</small>
+                <small class="text-muted d-block">id_maladie, id_region, date, nouveau_cas, total_cas, nouveau_mort, total_mort, source, nom_region, nom_maladie</small>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="region-select" class="form-label">Sélectionner une région</label>
+                    <select id="region-select" class="form-select" (change)="onRegionChange($event)">
+                        <option value="">Sélectionnez une région</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="predictive-maladie-select" class="form-label">Sélectionner une maladie</label>
+                    <select id="predictive-maladie-select" class="form-select" (change)="onMaladieChange($event)">
+                        <option value="">Sélectionnez une maladie</option>
+                    </select>
+                </div>
+            </div>
+            <div class="alert alert-info" *ngIf="importMessage">
+                {{ importMessage }}
+            </div>
+            <canvas id="predictiveChart" height="300"></canvas>
         </div>
     </div>
 </div>

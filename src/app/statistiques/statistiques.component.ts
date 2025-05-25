@@ -1,6 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import Chart from 'chart.js/auto';
 
+interface DonneesPredictives {
+  id_maladie: string;
+  id_region: string;
+  date: string;
+  nouveau_cas: number;
+  total_cas: number;
+  nouveau_mort: number;
+  total_mort: number;
+  source: string;
+  nom_region: string;
+  nom_maladie: string;
+}
+
 @Component({
   selector: 'app-statistiques',
   templateUrl: './statistiques.component.html',
@@ -12,11 +25,19 @@ export class StatistiquesComponent implements OnInit {
   selectedPays: string | null = null;
   selectedMaladie: string | null = null;
   selectedType: string = 'nouveau_mort';
+  importMessage: string = '';
+
+  predictiveData: DonneesPredictives[] = [];
+  selectedRegion: string = '';
+  selectedPredictiveMaladie: string = '';
+  availableRegions: string[] = [];
+  availableMaladies: string[] = [];
 
   chart: any;
   compareChart: any;
   chartCas: any;
   chartMorts: any;
+  predictiveChart: any;
 
   currentLabels: string[] = [];
   currentValues: number[] = [];
@@ -241,22 +262,22 @@ export class StatistiquesComponent implements OnInit {
 
   async loadCasCharts() {
     if (!this.selectedPays || !this.selectedMaladie) return;
-  
+
     const resTotal = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=total_cas`);
     const totalCasData = await resTotal.json();
-  
+
     const resNouveau = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=nouveau_cas`);
     const nouveauCasData = await resNouveau.json();
-  
+
     const labels = totalCasData.map((d: any) => d.date);
     const totalCas = totalCasData.map((d: any) => d.valeur);
     const nouveauCas = nouveauCasData.map((d: any) => d.valeur);
-  
+
     const { labels: cleanLabels, cleanedDatasets } = this.cleanMultipleDatasets(labels, [totalCas, nouveauCas]);
     const [cleanTotalCas, cleanNouveauCas] = cleanedDatasets;
-  
+
     if (this.chartCas) this.chartCas.destroy();
-  
+
     this.chartCas = new Chart(document.getElementById('casChart') as HTMLCanvasElement, {
       type: 'line',
       data: {
@@ -289,26 +310,26 @@ export class StatistiquesComponent implements OnInit {
       }
     });
   }
-  
+
 
   async loadMortsCharts() {
     if (!this.selectedPays || !this.selectedMaladie) return;
-  
+
     const resTotal = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=total_mort`);
     const totalMortsData = await resTotal.json();
-  
+
     const resNouveau = await fetch(`${this.apiBase}/statistiques/donnees-par-jour?paysId=${this.selectedPays}&maladieId=${this.selectedMaladie}&type=nouveau_mort`);
     const nouveauMortsData = await resNouveau.json();
-  
+
     const labels = totalMortsData.map((d: any) => d.date);
     const totalMorts = totalMortsData.map((d: any) => d.valeur);
     const nouveauMorts = nouveauMortsData.map((d: any) => d.valeur);
-  
+
     const { labels: cleanLabels, cleanedDatasets } = this.cleanMultipleDatasets(labels, [totalMorts, nouveauMorts]);
     const [cleanTotalMorts, cleanNouveauMorts] = cleanedDatasets;
-  
+
     if (this.chartMorts) this.chartMorts.destroy();
-  
+
     this.chartMorts = new Chart(document.getElementById('mortsChart') as HTMLCanvasElement, {
       type: 'line',
       data: {
@@ -341,11 +362,11 @@ export class StatistiquesComponent implements OnInit {
       }
     });
   }
-  
+
   cleanMultipleDatasets(labels: string[], datasets: number[][]): { labels: string[], cleanedDatasets: number[][] } {
     const cleanedLabels: string[] = [];
     const cleanedData: number[][] = datasets.map(() => []);
-  
+
     for (let i = 0; i < labels.length; i++) {
       const hasNonZero = datasets.some(ds => ds[i] !== 0);
       if (hasNonZero) {
@@ -357,7 +378,7 @@ export class StatistiquesComponent implements OnInit {
     }
     return { labels: cleanedLabels, cleanedDatasets: cleanedData };
   }
-  
+
 
   exportToCSV(labels: string[], values: number[]) {
     let csv = 'Date,Valeur\n';
@@ -375,5 +396,156 @@ export class StatistiquesComponent implements OnInit {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        this.processCSV(text);
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  processCSV(csvText: string) {
+    const lines = csvText.split('\n');
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+
+    const requiredHeaders = [
+      'id_maladie', 'id_region', 'date', 'nouveau_cas', 'total_cas',
+      'nouveau_mort', 'total_mort', 'source', 'nom_region', 'nom_maladie'
+    ];
+
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    if (missingHeaders.length > 0) {
+      this.importMessage = `Erreur : Colonnes manquantes : ${missingHeaders.join(', ')}`;
+      return;
+    }
+
+    try {
+      this.predictiveData = lines.slice(1)
+        .filter(line => line.trim() !== '')
+        .map(line => {
+          const values = line.split(',').map(v => v.trim());
+          const entry: any = {};
+
+          headers.forEach((header, index) => {
+            if (['nouveau_cas', 'total_cas', 'nouveau_mort', 'total_mort'].includes(header)) {
+              entry[header] = parseFloat(values[index]);
+              if (isNaN(entry[header])) {
+                throw new Error(`Valeur invalide pour ${header}: ${values[index]}`);
+              }
+            } else {
+              entry[header] = values[index];
+            }
+          });
+
+          return entry as DonneesPredictives;
+        });
+
+      this.availableRegions = [...new Set(this.predictiveData.map(d => d.nom_region))];
+      this.availableMaladies = [...new Set(this.predictiveData.map(d => d.nom_maladie))];
+
+      this.updateSelectors();
+
+      this.importMessage = `${this.predictiveData.length} lignes de données importées avec succès.`;
+    } catch (error) {
+      this.importMessage = `Erreur lors du traitement du fichier : ${error instanceof Error ? error.message : 'Erreur inconnue'}`;
+    }
+  }
+
+  updateSelectors() {
+    const regionSelect = document.getElementById('region-select') as HTMLSelectElement;
+    const maladieSelect = document.getElementById('predictive-maladie-select') as HTMLSelectElement;
+
+    regionSelect.innerHTML = '<option value="">Sélectionnez une région</option>';
+    this.availableRegions.forEach(region => {
+      const option = document.createElement('option');
+      option.value = region;
+      option.textContent = region;
+      regionSelect.appendChild(option);
+    });
+
+    maladieSelect.innerHTML = '<option value="">Sélectionnez une maladie</option>';
+    this.availableMaladies.forEach(maladie => {
+      const option = document.createElement('option');
+      option.value = maladie;
+      option.textContent = maladie;
+      maladieSelect.appendChild(option);
+    });
+  }
+
+  onRegionChange(event: Event) {
+    this.selectedRegion = (event.target as HTMLSelectElement).value;
+    this.updatePredictiveChart();
+  }
+
+  onMaladieChange(event: Event) {
+    this.selectedPredictiveMaladie = (event.target as HTMLSelectElement).value;
+    this.updatePredictiveChart();
+  }
+
+  updatePredictiveChart() {
+    if (!this.selectedRegion || !this.selectedPredictiveMaladie) return;
+
+    const filteredData = this.predictiveData.filter(d =>
+      d.nom_region === this.selectedRegion &&
+      d.nom_maladie === this.selectedPredictiveMaladie
+    );
+
+    if (this.predictiveChart) {
+      this.predictiveChart.destroy();
+    }
+
+    if (filteredData.length === 0) {
+      this.importMessage = "Aucune donnée disponible pour cette sélection";
+      return;
+    }
+
+    this.predictiveChart = new Chart(document.getElementById('predictiveChart') as HTMLCanvasElement, {
+      type: 'line',
+      data: {
+        labels: filteredData.map(d => d.date),
+        datasets: [{
+          label: 'Total des cas',
+          data: filteredData.map(d => d.total_cas),
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0,0,255,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: { display: true, text: 'Date' }
+          },
+          y: {
+            title: { display: true, text: 'Total des cas' },
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: function(context: any) {
+                const value = context.parsed.y;
+                return `Total des cas: ${value.toLocaleString()}`;
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: `Évolution des cas - ${this.selectedRegion} - ${this.selectedPredictiveMaladie}`
+          }
+        }
+      }
+    });
   }
 }
